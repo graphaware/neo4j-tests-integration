@@ -7,6 +7,7 @@ package com.graphaware.integration.neo4j.test;
 
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
+import java.util.Collections;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,11 @@ public class EmbeddedGraphDatabaseServer {
 
     private GraphDatabaseServiceWrapper embeddedServer;
 
-    public void start(Map<String, Object> ...parameters) {
+    public void start() {
+        start(Collections.<String, Object>emptyMap());
+    }
+    
+    public void start(Map<String, Object> parameters) {
         final String classpath = System.getProperty("classpath");
         LOG.info("Neo4j classpath: " + classpath);
         try {

@@ -8,6 +8,7 @@ package com.graphaware.integration.neo4j.test;
 import java.util.Map;
 
 public interface GraphDatabaseServiceWrapper {
-    public void startEmbeddedServer(Map<String, Object>... parameters);
-    public void stopEmbeddedServer();
+    void startEmbeddedServer();
+    void startEmbeddedServer(Map<String, Object> parameters);
+    void stopEmbeddedServer();
 }
