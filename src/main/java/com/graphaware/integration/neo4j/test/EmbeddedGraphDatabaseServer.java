@@ -41,4 +41,10 @@ public class EmbeddedGraphDatabaseServer {
         embeddedServer = null;
         System.gc();
     }
+    
+    public void populate(String cypher) {
+        if (embeddedServer == null)
+            throw new RuntimeException("Cannot be populated. Database not started.");
+        embeddedServer.populate(cypher);
+    }
 }

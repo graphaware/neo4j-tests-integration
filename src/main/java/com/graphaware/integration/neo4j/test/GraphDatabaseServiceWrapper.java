@@ -11,4 +11,5 @@ public interface GraphDatabaseServiceWrapper {
     void startEmbeddedServer();
     void startEmbeddedServer(Map<String, Object> parameters);
     void stopEmbeddedServer();
+    void populate(String cypher);
 }

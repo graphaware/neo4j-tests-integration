@@ -108,4 +108,12 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         if (tmpDirectory != null && tmpDirectory.exists())
             tmpDirectory.delete();
     }
+
+    @Override
+    public void populate(String cypherPath) {
+        if (graphDb == null || !graphDb.isAvailable(10000))
+            throw new RuntimeException("GraphDb Cannot be populate: Database not available");
+        EmbeddedGraphgenPopulator populator = new EmbeddedGraphgenPopulator(cypherPath);
+        populator.populate(graphDb);
+    }
 }
