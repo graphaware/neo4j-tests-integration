@@ -1,0 +1,5 @@
+/.idea/
+/target/
+/nbproject/
+/neo4j-tests-integration.iml
+/nb-configuration.xml
