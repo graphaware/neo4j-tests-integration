@@ -5,6 +5,10 @@
  */
 package com.graphaware.integration.neo4j.test;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +29,7 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
     private static final Logger LOG = LoggerFactory.getLogger(GraphDatabaseServiceWrapperImpl.class);
     private WrappingNeoServerBootstrapper neoServerBootstrapper;
     private GraphDatabaseService graphDb;
+    private File tmpDirectory;
 
     @Override
     public void startEmbeddedServer() {
@@ -41,7 +46,8 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
             public void run() {
                 try {
                     Thread.currentThread().setContextClassLoader(currentClassLoader);
-                    GraphDatabaseBuilder newImpermanentDatabaseBuilder = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder();
+                    tmpDirectory = getTempDirectory();
+                    GraphDatabaseBuilder newImpermanentDatabaseBuilder = new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder(tmpDirectory);
                     if (parameters != null && parameters.containsKey(EmbeddedGraphDatabaseServerConfig.CONFIG_FILE_PATH)) {
                         newImpermanentDatabaseBuilder.loadPropertiesFromFile(String.valueOf(parameters.get(EmbeddedGraphDatabaseServerConfig.CONFIG_FILE_PATH)));
                     }
@@ -67,6 +73,15 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
                 }
             }
 
+            private File getTempDirectory() throws IOException {
+                String defaultTmp = System.getProperty("java.io.tmpdir");
+                System.out.println(defaultTmp);
+                Path tmpDirectory = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
+                File tmpDirectoryFile = tmpDirectory.toFile();
+                tmpDirectoryFile.deleteOnExit();
+                return tmpDirectoryFile;
+            }
+
             private String getParameter(Map<String, Object> parameters, String key, String defaultValue) {
                 if (parameters != null && parameters.containsKey(key)) {
                     return String.valueOf(parameters.get(key));
@@ -90,5 +105,7 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
     public void stopEmbeddedServer() {
         neoServerBootstrapper.stop();
         graphDb.shutdown();
+        if (tmpDirectory != null && tmpDirectory.exists())
+            tmpDirectory.delete();
     }
 }
