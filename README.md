@@ -1,7 +1,12 @@
-Testing Support for GraphAware Neo4j<->Elasticsearch Integration
-================================================================
+Testing Support for Neo4j Integrations
+======================================
 
 [![Build Status](https://travis-ci.org/graphaware/neo4j-tests-integration.png)](https://travis-ci.org/graphaware/neo4j-tests-integration) | Latest Release: 2.3.3.1
+
+Provides the ability to test against Neo4j in the presence of potential dependency version clashes. A classic example
+ are different versions of Lucene when running Neo4j and Elasticseach in the same JVM.
+
+This project starts Neo4j using a different classloader, hence alleviating the issue.
 
 For Neo4 2.3.0+, use
 
