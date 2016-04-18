@@ -18,5 +18,6 @@ package com.graphaware.integration.neo4j.test;
 public class EmbeddedGraphDatabaseServerConfig {
     public static String CONFIG_FILE_PATH = "CONFIG_FILE";
     public static String CONFIG_REST_PORT = "REST_PORT";
-    public static String CONFIG_REST_ADDRESS = "REST_ADDRESS";
+    public static String CONFIG_REST_ENABLE_AUTH = "ENABLE_AUTH";
+    public static String CONFIG_REST_ENABLE_BOLT = "ENABLE_BOLT";
 }

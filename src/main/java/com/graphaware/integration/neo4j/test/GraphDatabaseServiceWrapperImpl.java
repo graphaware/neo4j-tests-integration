@@ -26,10 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
-import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.server.WrappingNeoServerBootstrapper;
-import org.neo4j.server.configuration.Configurator;
-import org.neo4j.server.configuration.ServerConfigurator;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +33,7 @@ import org.slf4j.LoggerFactory;
 public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphDatabaseServiceWrapperImpl.class);
-    private WrappingNeoServerBootstrapper neoServerBootstrapper;
+    private GraphDatabaseTestServer neoServerBootstrapper;
     private GraphDatabaseService graphDb;
     private File tmpDirectory;
 
@@ -55,29 +51,22 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
             @Override
             public void run() {
                 try {
-                    Thread.currentThread().setContextClassLoader(currentClassLoader);
-                    tmpDirectory = getTempDirectory();
-                    GraphDatabaseBuilder newImpermanentDatabaseBuilder = new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder(tmpDirectory);
-                    if (parameters != null && parameters.containsKey(EmbeddedGraphDatabaseServerConfig.CONFIG_FILE_PATH)) {
-                        newImpermanentDatabaseBuilder.loadPropertiesFromFile(String.valueOf(parameters.get(EmbeddedGraphDatabaseServerConfig.CONFIG_FILE_PATH)));
-                    }
-                    graphDb = newImpermanentDatabaseBuilder
-                            .newGraphDatabase();
-
                     LOG.info("Embedded Neo4j started ...");
-                    GraphDatabaseAPI api = (GraphDatabaseAPI) graphDb;
-
-                    String address = getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ADDRESS, "127.0.0.1");
-                    ServerConfigurator config = new ServerConfigurator(api);
-                    config.configuration()
-                            .addProperty(Configurator.WEBSERVER_ADDRESS_PROPERTY_KEY, address);
-                    String port = getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_PORT, "7474");
-
-                    config.configuration()
-                            .addProperty(Configurator.WEBSERVER_PORT_PROPERTY_KEY, "7474");
-                    neoServerBootstrapper = new WrappingNeoServerBootstrapper(api, config);
-                    neoServerBootstrapper.start();
-
+                    
+                    GraphDatabaseTestServer.Builder neoServerBootstrapperBuilder = new GraphDatabaseTestServer.Builder();
+                    boolean enableBolt = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_BOLT, "true"));
+                    neoServerBootstrapperBuilder.enableBolt(enableBolt);
+                    
+                    int port = Integer.parseInt(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_PORT, "7474"));
+                    neoServerBootstrapperBuilder.port(port);
+                    
+                    boolean enableAuth = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_AUTH, "false"));
+                    neoServerBootstrapperBuilder.enableAuthentication(enableAuth);
+                    
+                    neoServerBootstrapper = neoServerBootstrapperBuilder.build();
+                    if (!neoServerBootstrapper.isRunning(10000))
+                        throw new RuntimeException("Could not start graph db after 10 seconds");
+                    graphDb = neoServerBootstrapper.getGraphDatabaseService();
                 } catch (Exception e) {
                     LOG.error("Error while starting Neo4j embedded server!", e);
                 }
@@ -113,8 +102,7 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
 
     @Override
     public void stopEmbeddedServer() {
-        neoServerBootstrapper.stop();
-        graphDb.shutdown();
+        neoServerBootstrapper.shutdown();
         if (tmpDirectory != null && tmpDirectory.exists())
             tmpDirectory.delete();
     }
