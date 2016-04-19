@@ -5,6 +5,9 @@
  */
 package com.graphaware.integration.neo4j.test;
 
+import java.io.File;
+import static java.lang.System.getProperty;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.neo4j.driver.v1.Driver;
@@ -18,29 +21,42 @@ import org.neo4j.driver.v1.StatementResult;
  */
 public class GraphDatabaseTestServerTest {
 
+    private static final File DEFAULT_KNOWN_HOSTS = new File(getProperty("user.home"),
+            ".neo4j" + File.separator + "known_hosts");
+
     public GraphDatabaseTestServerTest() {
+    }
+
+    @After
+    public void clear() {
+        deleteDefaultKnownCertFileIfExists();
     }
 
     @Test
     public void testBolt() {
-        System.out.println("getGraphDatabaseService");
+        System.out.println("testBolt");
         GraphDatabaseTestServer instance = new GraphDatabaseTestServer.Builder().enableBolt(true).build();
-        try (Driver driver = GraphDatabase.driver("bolt://localhost")) {
+        try (Driver driver = GraphDatabase.driver(instance.url())) {
             Session session = driver.session();
             StatementResult result = session.run("CREATE (n) RETURN n");
             int theOnesCreated = result.consume().counters().nodesCreated();
             assertEquals(theOnesCreated, 1);
             session.close();
         }
-        
     }
-    
+
     @Test
     public void testNonBolt() {
-        System.out.println("getGraphDatabaseService");
+        System.out.println("testNonBolt");
         GraphDatabaseTestServer instance = new GraphDatabaseTestServer.Builder().port(7474).build();
-        
-        
+        System.out.println("testNonBolt");
+
+    }
+
+    public static void deleteDefaultKnownCertFileIfExists() {
+        if (DEFAULT_KNOWN_HOSTS.exists()) {
+            DEFAULT_KNOWN_HOSTS.delete();
+        }
     }
 
 }

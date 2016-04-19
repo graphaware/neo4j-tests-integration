@@ -57,4 +57,8 @@ public class EmbeddedGraphDatabaseServer {
             throw new RuntimeException("Cannot be populated. Database not started.");
         embeddedServer.populate(cypher);
     }
+    
+    public String getURL() {
+        return embeddedServer.getURL();
+    }
 }

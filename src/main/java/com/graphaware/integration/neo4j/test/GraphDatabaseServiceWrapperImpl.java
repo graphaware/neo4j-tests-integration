@@ -25,8 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
-import org.neo4j.test.TestGraphDatabaseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +50,10 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
             public void run() {
                 try {
                     LOG.info("Embedded Neo4j started ...");
+                    Thread.currentThread().setContextClassLoader(currentClassLoader);
                     
                     GraphDatabaseTestServer.Builder neoServerBootstrapperBuilder = new GraphDatabaseTestServer.Builder();
-                    boolean enableBolt = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_BOLT, "true"));
+                    boolean enableBolt = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_BOLT, "false"));
                     neoServerBootstrapperBuilder.enableBolt(enableBolt);
                     
                     int port = Integer.parseInt(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_PORT, "7474"));
@@ -111,7 +110,15 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
     public void populate(String cypherPath) {
         if (graphDb == null || !graphDb.isAvailable(10000))
             throw new RuntimeException("GraphDb Cannot be populate: Database not available");
-        EmbeddedGraphgenPopulator populator = new EmbeddedGraphgenPopulator(cypherPath);
-        populator.populate(graphDb);
+        neoServerBootstrapper.loadClasspathCypherScriptFile(cypherPath);
+//        EmbeddedGraphgenPopulator populator = new EmbeddedGraphgenPopulator(cypherPath);
+        //populator.populate(graphDb);
+    }
+
+    @Override
+    public String getURL() {
+        if (neoServerBootstrapper == null)
+            throw new RuntimeException("neoServerBootstrapper is still not initialized");
+        return neoServerBootstrapper.url();
     }
 }

@@ -5,19 +5,24 @@
  */
 package com.graphaware.integration.neo4j.test;
 
-import com.graphaware.test.util.TestUtils;
+import java.io.File;
+import java.io.FileNotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.server.AbstractNeoServer;
 import org.neo4j.server.database.Database;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Scanner;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.ServerControls;
 import org.neo4j.harness.TestServerBuilders;
 
@@ -37,7 +42,7 @@ public class GraphDatabaseTestServer {
 
     private GraphDatabaseTestServer(Builder builder) {
 
-        this.port = builder.port == null ? TestUtils.getAvailablePort() : builder.port;
+        this.port = builder.port == null ? getAvailablePort() : builder.port;
         this.transactionTimeoutSeconds = builder.transactionTimeoutSeconds;
         this.enableAuthentication = builder.enableAuthentication;
         this.enableBolt = builder.enableBolt;
@@ -74,7 +79,7 @@ public class GraphDatabaseTestServer {
             });
 
         } catch (Exception e) {
-            throw new RuntimeException("Error starting in-process server",e);
+            throw new RuntimeException("Error starting in-process server", e);
         }
 
     }
@@ -123,8 +128,25 @@ public class GraphDatabaseTestServer {
         controls.close();
     }
 
+    public void loadClasspathCypherScriptFile(String cqlFileName) {
+        String complexCypher = readCQLFile(cqlFileName).toString();
+        String[] cyphers = complexCypher.split(";");
+        for (String statement : cyphers) {
+            String statementTrimmed = statement.trim();
+            if (statementTrimmed.length() > 0) {
+                try (Transaction tx = database.beginTx()) {
+                    database.execute(statementTrimmed);
+                    tx.success();
+                }
+            }
+        }
+
+    }
+
     /**
-     * Waits for a period of time and checks the database availability afterwards
+     * Waits for a period of time and checks the database availability
+     * afterwards
+     *
      * @param timeout milliseconds to wait
      * @return true if the database is available, false otherwise
      */
@@ -154,12 +176,40 @@ public class GraphDatabaseTestServer {
     }
 
     /**
-     * Retrieves the underlying {@link org.neo4j.graphdb.GraphDatabaseService} used in this test.
+     * Retrieves the underlying {@link org.neo4j.graphdb.GraphDatabaseService}
+     * used in this test.
      *
      * @return The test {@link org.neo4j.graphdb.GraphDatabaseService}
      */
     public GraphDatabaseService getGraphDatabaseService() {
         return this.database;
+    }
+
+    public static int getAvailablePort() {
+        try {
+            ServerSocket socket = new ServerSocket(0);
+            try {
+                return socket.getLocalPort();
+            } finally {
+                socket.close();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot find available port: " + e.getMessage(), e);
+        }
+    }
+
+    public static StringBuilder readCQLFile(String cqlFileName) {
+
+        StringBuilder cypher = new StringBuilder();
+        try (Scanner scanner = new Scanner(new File(cqlFileName))) {
+            scanner.useDelimiter(System.getProperty("line.separator"));
+            while (scanner.hasNext()) {
+                cypher.append(scanner.next()).append(' ');
+            }
+        } catch (FileNotFoundException ex) {
+            throw new RuntimeException("Error while loading cypher query file " + cqlFileName);
+        }
+        return cypher;
     }
 
     public static class Builder {

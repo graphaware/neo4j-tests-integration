@@ -13,21 +13,21 @@
  * the GNU General Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
-package com.graphaware.integration.neo4j.test;
-
-import com.graphaware.test.data.GraphgenPopulator;
-import java.io.IOException;
-
-public class EmbeddedGraphgenPopulator extends GraphgenPopulator {
-
-    private final String filePath;
-    public EmbeddedGraphgenPopulator(String filePath) {
-        this.filePath = filePath;
-    }
-    
-    @Override
-    protected String file() throws IOException {
-        return filePath;
-    }
-    
-}
+//package com.graphaware.integration.neo4j.test;
+//
+//import com.graphaware.test.data.GraphgenPopulator;
+//import java.io.IOException;
+//
+//public class EmbeddedGraphgenPopulator extends GraphgenPopulator {
+//
+//    private final String filePath;
+//    public EmbeddedGraphgenPopulator(String filePath) {
+//        this.filePath = filePath;
+//    }
+//    
+//    @Override
+//    protected String file() throws IOException {
+//        return filePath;
+//    }
+//    
+//}
