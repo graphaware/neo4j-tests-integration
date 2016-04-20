@@ -52,6 +52,23 @@ public class GraphDatabaseTestServerTest {
         System.out.println("testNonBolt");
 
     }
+    
+    
+//    @Test
+//    public void testWrapper() {
+//        System.out.println("testWrapper");
+//        EmbeddedGraphDatabaseServer server =  new EmbeddedGraphDatabaseServer();
+//        server.start();
+//        try (Driver driver = GraphDatabase.driver(server.getURL())) {
+//            Session session = driver.session();
+//            StatementResult result = session.run("CREATE (n) RETURN n");
+//            int theOnesCreated = result.consume().counters().nodesCreated();
+//            assertEquals(theOnesCreated, 1);
+//            session.close();
+//        }
+//        System.out.println("testWrapper");
+//
+//    }
 
     public static void deleteDefaultKnownCertFileIfExists() {
         if (DEFAULT_KNOWN_HOSTS.exists()) {

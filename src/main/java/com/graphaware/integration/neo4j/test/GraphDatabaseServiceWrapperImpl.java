@@ -51,33 +51,26 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
                 try {
                     LOG.info("Embedded Neo4j started ...");
                     Thread.currentThread().setContextClassLoader(currentClassLoader);
-                    
+
                     GraphDatabaseTestServer.Builder neoServerBootstrapperBuilder = new GraphDatabaseTestServer.Builder();
                     boolean enableBolt = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_BOLT, "false"));
                     neoServerBootstrapperBuilder.enableBolt(enableBolt);
-                    
-                    int port = Integer.parseInt(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_PORT, "7474"));
-                    neoServerBootstrapperBuilder.port(port);
-                    
-                    boolean enableAuth = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_AUTH, "false"));
-                    neoServerBootstrapperBuilder.enableAuthentication(enableAuth);
-                    
+
+                    if (!enableBolt) {
+                        int port = Integer.parseInt(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_PORT, "7474"));
+                        neoServerBootstrapperBuilder.port(port);
+
+                        boolean enableAuth = Boolean.parseBoolean(getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ENABLE_AUTH, "false"));
+                        neoServerBootstrapperBuilder.enableAuthentication(enableAuth);
+                    }
                     neoServerBootstrapper = neoServerBootstrapperBuilder.build();
-                    if (!neoServerBootstrapper.isRunning(10000))
+                    if (!neoServerBootstrapper.isRunning(30000)) {
                         throw new RuntimeException("Could not start graph db after 10 seconds");
+                    }
                     graphDb = neoServerBootstrapper.getGraphDatabaseService();
                 } catch (Exception e) {
                     LOG.error("Error while starting Neo4j embedded server!", e);
                 }
-            }
-
-            private File getTempDirectory() throws IOException {
-                String defaultTmp = System.getProperty("java.io.tmpdir");
-                System.out.println(defaultTmp);
-                Path tmpDirectory = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
-                File tmpDirectoryFile = tmpDirectory.toFile();
-                tmpDirectoryFile.deleteOnExit();
-                return tmpDirectoryFile;
             }
 
             private String getParameter(Map<String, Object> parameters, String key, String defaultValue) {
@@ -92,7 +85,7 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         try {
             LOG.info("Waiting for Neo4j embedded server...");
             executor.shutdown();
-            executor.awaitTermination(20, TimeUnit.SECONDS);
+            executor.awaitTermination(40, TimeUnit.SECONDS);
             LOG.info("Finished waiting.");
         } catch (InterruptedException ex) {
             LOG.error("Error while waiting!", ex);
@@ -102,14 +95,16 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
     @Override
     public void stopEmbeddedServer() {
         neoServerBootstrapper.shutdown();
-        if (tmpDirectory != null && tmpDirectory.exists())
+        if (tmpDirectory != null && tmpDirectory.exists()) {
             tmpDirectory.delete();
+        }
     }
 
     @Override
     public void populate(String cypherPath) {
-        if (graphDb == null || !graphDb.isAvailable(10000))
+        if (graphDb == null || !graphDb.isAvailable(10000)) {
             throw new RuntimeException("GraphDb Cannot be populate: Database not available");
+        }
         neoServerBootstrapper.loadClasspathCypherScriptFile(cypherPath);
 //        EmbeddedGraphgenPopulator populator = new EmbeddedGraphgenPopulator(cypherPath);
         //populator.populate(graphDb);
@@ -117,8 +112,9 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
 
     @Override
     public String getURL() {
-        if (neoServerBootstrapper == null)
+        if (neoServerBootstrapper == null) {
             throw new RuntimeException("neoServerBootstrapper is still not initialized");
+        }
         return neoServerBootstrapper.url();
     }
 }
