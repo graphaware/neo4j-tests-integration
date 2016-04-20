@@ -22,6 +22,7 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
+import org.neo4j.bolt.BoltKernelExtension;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.ServerControls;
 import org.neo4j.harness.TestServerBuilders;
@@ -55,6 +56,7 @@ public class GraphDatabaseTestServer {
             if (enableBolt) {
                 controls = TestServerBuilders.newInProcessBuilder()
                         .withConfig("dbms.connector.0.enabled", String.valueOf(enableBolt))
+                        .withConfig("dbms.connector.0.socket_address", "localhost:5001")
                         .newServer();
             } else {
                 controls = TestServerBuilders.newInProcessBuilder()
