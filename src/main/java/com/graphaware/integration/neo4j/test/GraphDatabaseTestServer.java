@@ -56,7 +56,6 @@ public class GraphDatabaseTestServer {
             if (enableBolt) {
                 controls = TestServerBuilders.newInProcessBuilder()
                         .withConfig("dbms.connector.0.enabled", String.valueOf(enableBolt))
-                        .withConfig("dbms.connector.0.socket_address", "localhost:5001")
                         .newServer();
             } else {
                 controls = TestServerBuilders.newInProcessBuilder()
