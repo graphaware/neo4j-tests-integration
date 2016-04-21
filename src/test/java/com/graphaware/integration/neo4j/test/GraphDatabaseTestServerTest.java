@@ -10,6 +10,8 @@ import static java.lang.System.getProperty;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.neo4j.driver.v1.Config;
+import static org.neo4j.driver.v1.Config.EncryptionLevel.NONE;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Session;
@@ -36,7 +38,7 @@ public class GraphDatabaseTestServerTest {
     public void testBolt() {
         System.out.println("testBolt");
         GraphDatabaseTestServer instance = new GraphDatabaseTestServer.Builder().enableBolt(true).build();
-        try (Driver driver = GraphDatabase.driver(instance.url())) {
+        try (Driver driver = GraphDatabase.driver(instance.url(), Config.build().withEncryptionLevel(NONE).toConfig())) {
             Session session = driver.session();
             StatementResult result = session.run("CREATE (n) RETURN n");
             int theOnesCreated = result.consume().counters().nodesCreated();

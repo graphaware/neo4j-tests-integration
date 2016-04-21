@@ -22,7 +22,6 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
-import org.neo4j.bolt.BoltKernelExtension;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.harness.ServerControls;
 import org.neo4j.harness.TestServerBuilders;
@@ -40,7 +39,7 @@ public class GraphDatabaseTestServer {
 
     private GraphDatabaseService database;
     private ServerControls controls;
-
+    
     private GraphDatabaseTestServer(Builder builder) {
 
         this.port = builder.port == null ? getAvailablePort() : builder.port;
