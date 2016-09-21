@@ -15,6 +15,13 @@
  */
 package com.graphaware.integration.neo4j.test;
 
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.helpers.HostnamePort;
+import org.neo4j.server.NeoServer;
+import org.neo4j.server.helpers.CommunityServerBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,22 +31,15 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
-import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.server.WrappingNeoServerBootstrapper;
-import org.neo4j.server.configuration.Configurator;
-import org.neo4j.server.configuration.ServerConfigurator;
-import org.neo4j.test.TestGraphDatabaseFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphDatabaseServiceWrapperImpl.class);
-    private WrappingNeoServerBootstrapper neoServerBootstrapper;
-    private GraphDatabaseService graphDb;
+    private NeoServer neoServer;
+    private GraphDatabaseService database;
     private File tmpDirectory;
+    private AtomicBoolean started = new AtomicBoolean(false);
 
     @Override
     public void startEmbeddedServer() {
@@ -52,57 +52,48 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         final ExecutorService executor = Executors.newSingleThreadExecutor();
 
         executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.currentThread().setContextClassLoader(currentClassLoader);
-                    tmpDirectory = getTempDirectory();
-                    GraphDatabaseBuilder newImpermanentDatabaseBuilder = new TestGraphDatabaseFactory().newEmbeddedDatabaseBuilder(tmpDirectory);
-                    if (parameters != null && parameters.containsKey(EmbeddedGraphDatabaseServerConfig.CONFIG_FILE_PATH)) {
-                        newImpermanentDatabaseBuilder.loadPropertiesFromFile(String.valueOf(parameters.get(EmbeddedGraphDatabaseServerConfig.CONFIG_FILE_PATH)));
-                    }
-                    graphDb = newImpermanentDatabaseBuilder
-                            .newGraphDatabase();
+                             @Override
+                             public void run() {
+                                 try {
+                                     Thread.currentThread().setContextClassLoader(currentClassLoader);
+                                     tmpDirectory = getTempDirectory();
 
-                    LOG.info("Embedded Neo4j started ...");
-                    GraphDatabaseAPI api = (GraphDatabaseAPI) graphDb;
+                                     CommunityServerBuilder builder = CommunityServerBuilder
+                                             .server()
+                                             .onAddress(new HostnamePort("127.0.0.1", 7474))
+                                             .usingDataDir(tmpDirectory.getAbsolutePath());
 
-                    String address = getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_ADDRESS, "127.0.0.1");
-                    ServerConfigurator config = new ServerConfigurator(api);
-                    config.configuration()
-                            .addProperty(Configurator.WEBSERVER_ADDRESS_PROPERTY_KEY, address);
-                    String port = getParameter(parameters, EmbeddedGraphDatabaseServerConfig.CONFIG_REST_PORT, "7474");
+                                     for (String key : parameters.keySet()) {
+                                         builder = builder.withProperty(key, parameters.get(key).toString());
+                                     }
 
-                    config.configuration()
-                            .addProperty(Configurator.WEBSERVER_PORT_PROPERTY_KEY, "7474");
-                    neoServerBootstrapper = new WrappingNeoServerBootstrapper(api, config);
-                    neoServerBootstrapper.start();
+                                     neoServer = builder.build();
 
-                } catch (Exception e) {
-                    LOG.error("Error while starting Neo4j embedded server!", e);
-                }
-            }
+                                     neoServer.start();
 
-            private File getTempDirectory() throws IOException {
-                String defaultTmp = System.getProperty("java.io.tmpdir");
-                System.out.println(defaultTmp);
-                Path tmpDirectory = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
-                File tmpDirectoryFile = tmpDirectory.toFile();
-                tmpDirectoryFile.deleteOnExit();
-                return tmpDirectoryFile;
-            }
+                                     database = neoServer.getDatabase().getGraph();
 
-            private String getParameter(Map<String, Object> parameters, String key, String defaultValue) {
-                if (parameters != null && parameters.containsKey(key)) {
-                    return String.valueOf(parameters.get(key));
-                }
-                return defaultValue;
-            }
-        }
+                                     LOG.info("Test Neo4j Server started.");
+
+                                     if (parameters.containsKey("cypherPath")) {
+                                         LOG.info("Populating Neo4j...");
+
+                                         new EmbeddedGraphgenPopulator(parameters.get("cypherPath").toString()).populate(database);
+
+                                         LOG.info("Done populating Neo4j.");
+                                     }
+
+                                     started.set(true);
+
+                                 } catch (Exception e) {
+                                     LOG.error("Error while starting Test Neo4j Server!", e);
+                                 }
+                             }
+                         }
         );
 
         try {
-            LOG.info("Waiting for Neo4j embedded server...");
+            LOG.info("Waiting for Test Neo4j Server...");
             executor.shutdown();
             executor.awaitTermination(20, TimeUnit.SECONDS);
             LOG.info("Finished waiting.");
@@ -111,19 +102,19 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         }
     }
 
-    @Override
-    public void stopEmbeddedServer() {
-        neoServerBootstrapper.stop();
-        graphDb.shutdown();
-        if (tmpDirectory != null && tmpDirectory.exists())
-            tmpDirectory.delete();
+    private File getTempDirectory() throws IOException {
+        String defaultTmp = System.getProperty("java.io.tmpdir");
+        System.out.println(defaultTmp);
+        Path tmpDirectory = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
+        File tmpDirectoryFile = tmpDirectory.toFile();
+        tmpDirectoryFile.deleteOnExit();
+        return tmpDirectoryFile;
     }
 
     @Override
-    public void populate(String cypherPath) {
-        if (graphDb == null || !graphDb.isAvailable(10000))
-            throw new RuntimeException("GraphDb Cannot be populate: Database not available");
-        EmbeddedGraphgenPopulator populator = new EmbeddedGraphgenPopulator(cypherPath);
-        populator.populate(graphDb);
+    public void stopEmbeddedServer() {
+        neoServer.stop();
+        if (tmpDirectory != null && tmpDirectory.exists())
+            tmpDirectory.delete();
     }
 }
