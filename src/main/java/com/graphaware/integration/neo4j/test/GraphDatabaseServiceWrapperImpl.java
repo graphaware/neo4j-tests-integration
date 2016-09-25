@@ -60,9 +60,11 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
 
                                      CommunityServerBuilder builder = CommunityServerBuilder
                                              .server()
-                                             .onAddress(new HostnamePort("127.0.0.1", 7474))
                                              .usingDataDir(tmpDirectory.getAbsolutePath());
 
+                                     if (!parameters.containsKey("dbms.connector.http.address")) {
+                                         parameters.put("dbms.connector.http.address", "127.0.0.1:7474");
+                                     }
                                      for (String key : parameters.keySet()) {
                                          builder = builder.withProperty(key, parameters.get(key).toString());
                                      }
