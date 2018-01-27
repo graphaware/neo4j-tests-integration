@@ -117,9 +117,9 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
 
     private File getTempDirectory() throws IOException {
         String defaultTmp = System.getProperty("java.io.tmpdir");
-        System.out.println(defaultTmp);
-        Path tmpDirectory = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
-        File tmpDirectoryFile = tmpDirectory.toFile();
+        LOG.info("default temporary folder {}", defaultTmp);
+        Path tmpDirectoryPath = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
+        File tmpDirectoryFile = tmpDirectoryPath.toFile();
         tmpDirectoryFile.deleteOnExit();
         return tmpDirectoryFile;
     }
