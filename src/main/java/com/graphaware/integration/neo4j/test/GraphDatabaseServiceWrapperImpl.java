@@ -97,10 +97,21 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         try {
             LOG.info("Waiting for Test Neo4j Server...");
             executor.shutdown();
+            waitForStartUp(parameters);
             executor.awaitTermination(20, TimeUnit.SECONDS);
             LOG.info("Finished waiting.");
         } catch (InterruptedException ex) {
             LOG.error("Error while waiting!", ex);
+        }
+    }
+
+    private void waitForStartUp(final Map<String, Object> parameters) throws InterruptedException {
+        Object maxWaitingTime = parameters.get("maxWaitingTime");
+        long waitTime = 1000L;
+        long maxNumberOfChecks = maxWaitingTime == null ? 100L : (Long) maxWaitingTime / waitTime;
+
+        for(long i = 0; !started.get() && i < maxNumberOfChecks; i++) {
+            Thread.sleep(waitTime);
         }
     }
 
