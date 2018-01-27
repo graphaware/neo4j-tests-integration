@@ -16,7 +16,6 @@
 package com.graphaware.integration.neo4j.test;
 
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.helpers.HostnamePort;
 import org.neo4j.server.NeoServer;
 import org.neo4j.server.helpers.CommunityServerBuilder;
 import org.slf4j.Logger;
