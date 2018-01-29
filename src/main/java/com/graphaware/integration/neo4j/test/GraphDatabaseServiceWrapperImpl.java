@@ -16,7 +16,6 @@
 package com.graphaware.integration.neo4j.test;
 
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.helpers.HostnamePort;
 import org.neo4j.server.NeoServer;
 import org.neo4j.server.helpers.CommunityServerBuilder;
 import org.slf4j.Logger;
@@ -97,6 +96,7 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         try {
             LOG.info("Waiting for Test Neo4j Server...");
             executor.shutdown();
+            waitForStartUp(parameters);
             executor.awaitTermination(20, TimeUnit.SECONDS);
             LOG.info("Finished waiting.");
         } catch (InterruptedException ex) {
@@ -104,11 +104,21 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         }
     }
 
+    private void waitForStartUp(final Map<String, Object> parameters) throws InterruptedException {
+        Object maxWaitingTime = parameters.get("maxWaitingTime");
+        long waitTime = 1000L;
+        long maxNumberOfChecks = maxWaitingTime == null ? 100L : (Long) maxWaitingTime / waitTime;
+
+        for(long i = 0; !started.get() && i < maxNumberOfChecks; i++) {
+            Thread.sleep(waitTime);
+        }
+    }
+
     private File getTempDirectory() throws IOException {
         String defaultTmp = System.getProperty("java.io.tmpdir");
-        System.out.println(defaultTmp);
-        Path tmpDirectory = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
-        File tmpDirectoryFile = tmpDirectory.toFile();
+        LOG.info("default temporary folder {}", defaultTmp);
+        Path tmpDirectoryPath = Files.createTempDirectory(new File(defaultTmp).toPath(), "neoTestDb_");
+        File tmpDirectoryFile = tmpDirectoryPath.toFile();
         tmpDirectoryFile.deleteOnExit();
         return tmpDirectoryFile;
     }
