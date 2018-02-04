@@ -21,7 +21,7 @@
 
     <groupId>com.graphaware.integration.neo4j</groupId>
     <artifactId>neo4j-tests-integration</artifactId>
-    <version>3.0.6.2-SNAPSHOT</version>
+    <version>3.3.2.1-SNAPSHOT</version>
 
     <name>Neo4j Integration Tests</name>
     <description>Test Utilities for GraphAware Neo4j-Elasticsearch Integration</description>
@@ -158,8 +158,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
-        <neo4j.version>3.0.6</neo4j.version>
-        <graphaware.version>3.0.6.43</graphaware.version>
+        <neo4j.version>3.3.2</neo4j.version>
+        <graphaware.version>3.3.2.52</graphaware.version>
         <java.version>1.7</java.version>
     </properties>
 
