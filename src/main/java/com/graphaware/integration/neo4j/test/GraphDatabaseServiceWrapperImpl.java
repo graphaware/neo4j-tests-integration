@@ -62,8 +62,9 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
                                              .usingDataDir(tmpDirectory.getAbsolutePath());
 
                                      if (!parameters.containsKey("dbms.connector.http.address")) {
-                                         parameters.put("dbms.connector.http.address", "127.0.0.1:7474");
+                                         builder = builder.withProperty("dbms.connector.http.address", "127.0.0.1:7474");
                                      }
+
                                      for (String key : parameters.keySet()) {
                                          builder = builder.withProperty(key, parameters.get(key).toString());
                                      }
