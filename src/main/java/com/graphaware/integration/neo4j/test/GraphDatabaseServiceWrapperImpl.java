@@ -98,7 +98,7 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
             LOG.info("Waiting for Test Neo4j Server...");
             executor.shutdown();
             waitForStartUp(parameters);
-            executor.awaitTermination(20, TimeUnit.SECONDS);
+            executor.awaitTermination(1, TimeUnit.MINUTES);
             LOG.info("Finished waiting.");
         } catch (InterruptedException ex) {
             LOG.error("Error while waiting!", ex);
