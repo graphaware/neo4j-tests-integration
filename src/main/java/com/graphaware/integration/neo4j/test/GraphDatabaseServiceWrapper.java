@@ -15,10 +15,13 @@
  */
 package com.graphaware.integration.neo4j.test;
 
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+
 import java.util.Map;
 
 public interface GraphDatabaseServiceWrapper {
     void startEmbeddedServer();
     void startEmbeddedServer(Map<String, Object> parameters);
     void stopEmbeddedServer();
+    GraphDatabaseAPI getDatabase();
 }

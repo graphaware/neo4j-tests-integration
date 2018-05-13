@@ -16,6 +16,7 @@
 package com.graphaware.integration.neo4j.test;
 
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.server.NeoServer;
 import org.neo4j.server.helpers.CommunityServerBuilder;
 import org.slf4j.Logger;
@@ -129,5 +130,10 @@ public class GraphDatabaseServiceWrapperImpl implements GraphDatabaseServiceWrap
         neoServer.stop();
         if (tmpDirectory != null && tmpDirectory.exists())
             tmpDirectory.delete();
+    }
+
+    @Override
+    public GraphDatabaseAPI getDatabase() {
+        return neoServer.getDatabase().getGraph();
     }
 }

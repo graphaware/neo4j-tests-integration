@@ -19,6 +19,11 @@ import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Map;
+
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.kernel.internal.EmbeddedGraphDatabase;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.ImpermanentGraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,5 +55,12 @@ public class EmbeddedGraphDatabaseServer {
         embeddedServer.stopEmbeddedServer();
         embeddedServer = null;
         System.gc();
+    }
+
+    public GraphDatabaseAPI getDatabase() {
+        if (embeddedServer.getDatabase() instanceof ImpermanentGraphDatabase) {
+            return (GraphDatabaseAPI) embeddedServer.getDatabase();
+        }
+        return embeddedServer.getDatabase();
     }
 }

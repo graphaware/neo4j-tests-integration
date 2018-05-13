@@ -21,7 +21,7 @@
 
     <groupId>com.graphaware.integration.neo4j</groupId>
     <artifactId>neo4j-tests-integration</artifactId>
-    <version>3.0.6.2</version>
+    <version>3.0.6.3-SNAPSHOT</version>
 
     <name>Neo4j Integration Tests</name>
     <description>Test Utilities for GraphAware Neo4j-Elasticsearch Integration</description>
